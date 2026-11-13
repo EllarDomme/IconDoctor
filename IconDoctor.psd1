@@ -33,8 +33,8 @@
     PrivateData = @{
         PSData = @{
             Tags         = @('windows', 'icons', 'shortcut', 'troubleshooting', 'shell', 'desktop')
-            LicenseUri   = 'https://github.com/OWNER/IconDoctor/blob/main/LICENSE'
-            ProjectUri   = 'https://github.com/OWNER/IconDoctor'
+            LicenseUri   = 'https://github.com/EllarDomme/IconDoctor/blob/main/LICENSE'
+            ProjectUri   = 'https://github.com/EllarDomme/IconDoctor'
             ReleaseNotes = 'Initial public preview: layered diagnosis, signature-based verification, safe repair pipeline.'
         }
     }

@@ -3,7 +3,7 @@
 > 桌面快捷方式图标变成"白纸"时，绝大多数教程只有一个答案：清图标缓存。
 > IconDoctor 换了个思路——**先定位坏在哪一层，再只修那一层，修完自己验证**。
 
-[![CI](https://github.com/OWNER/IconDoctor/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/IconDoctor/actions/workflows/ci.yml)
+[![CI](https://github.com/EllarDomme/IconDoctor/actions/workflows/ci.yml/badge.svg)](https://github.com/EllarDomme/IconDoctor/actions/workflows/ci.yml)
 ![PowerShell](https://img.shields.io/badge/PowerShell-5.1%20%7C%207%2B-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -50,7 +50,7 @@ IconDoctor 的做法：
 ## 安装
 
 ```powershell
-git clone https://github.com/OWNER/IconDoctor.git
+git clone https://github.com/EllarDomme/IconDoctor.git
 cd IconDoctor
 Import-Module .\IconDoctor.psd1
 ```
