@@ -95,3 +95,51 @@ The valuable part is not the repair, it is the decision rule:
 
 That rule is now implemented as `Test-LayerFolderObject` (the L5 probe) and runs
 automatically on every diagnosis.
+
+
+---
+
+## Appendix: a second cause, same day — damaged shortcut data
+
+After the folder object was rebuilt, a reboot left **25 shortcuts blank** again
+(including VS Code, IDEA and WeChat, which had been fine). It looked like a
+relapse, but the probes told a different story:
+
+| Experiment | Result | Conclusion |
+|---|---|---|
+| New shortcut in `%TEMP%` | ✅ correct icon | shell handler is fine |
+| New shortcut **on the desktop** | ✅ correct icon | **folder is fine** |
+| **Pre-existing** shortcuts on the desktop | ❌ all 28 colours (blank) | **the files themselves are broken** |
+| Rebuild one of them | ✅ recovers | confirmed |
+
+The file headers differ:
+
+```
+broken .lnk : LinkFlags = 0x0000009B   (HasRelativePath + HasWorkingDir)
+new .lnk    : LinkFlags = 0x00000083
+```
+
+These shortcuts were created months ago and carry an embedded **relative path**.
+Rebuilding the folder changed the base those relative paths resolved against, so
+after the reboot resolution failed and the shell fell back to the generic page
+icon — while the `TargetPath` string in `LinkInfo` stayed valid, which is why
+double-clicking still worked.
+
+Fix: rebuild the shortcuts, keeping arguments, working directory and description.
+Twenty-four of them in one pass:
+
+```powershell
+Invoke-IconRepair
+```
+
+### The two failures side by side
+
+| | Morning | Afternoon |
+|---|---|---|
+| Cause | damaged folder object | damaged link data inside the shortcuts |
+| Decision rule | same file blank in the folder, fine in `%TEMP%` | new file fine, existing files blank |
+| Repair | rebuild the folder object | rebuild each shortcut |
+| Layer | L5 | L2 |
+
+> **Same symptom, two different layers.** That is exactly where "clear the icon
+> cache" tutorials break down: cache clearing fixes neither L5 nor L2.
