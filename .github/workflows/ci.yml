@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: PSScriptAnalyzer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+
+      - name: Analyze
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          $results | Format-Table -AutoSize | Out-String -Width 200 | Write-Host
+          if ($results | Where-Object Severity -eq 'Error') {
+            throw "PSScriptAnalyzer reported $($results.Count) error(s)."
+          }
+          if ($results.Count -gt 0) {
+            throw "PSScriptAnalyzer reported $($results.Count) unexpected warning(s)."
+          }
+
+  test:
+    name: Pester (${{ matrix.pwsh }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pwsh: [ '5.1', '7' ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Pester
+        shell: pwsh
+        run: Install-Module Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+
+      - name: Run tests (Windows PowerShell 5.1)
+        if: matrix.pwsh == '5.1'
+        shell: powershell
+        run: |
+          Import-Module Pester -MinimumVersion 5.0.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Output.Verbosity = 'Detailed'
+          $config.Run.Exit = $true
+          Invoke-Pester -Configuration $config
+
+      - name: Run tests (PowerShell 7)
+        if: matrix.pwsh == '7'
+        shell: pwsh
+        run: |
+          Import-Module Pester -MinimumVersion 5.0.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Output.Verbosity = 'Detailed'
+          $config.Run.Exit = $true
+          Invoke-Pester -Configuration $config
