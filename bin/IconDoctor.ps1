@@ -129,7 +129,12 @@ switch ($PSCmdlet.ParameterSetName) {
         }
         Write-Host ''
         Write-Host ("Fixed: {0}" -f $result.Fixed) -ForegroundColor Green
-        Write-Host ''
-        $result.After | Format-Table Name, Verdict, Similarity -AutoSize | Out-String -Width 160 | Write-Host
+
+        $remaining = @($result.After | Where-Object { $_.Verdict -ne 'Ok' })
+        if ($remaining.Count -gt 0) {
+            Write-Host ''
+            Write-Host 'Still needs attention:' -ForegroundColor Yellow
+            $remaining | Format-Table Name, Verdict, Message -AutoSize -Wrap | Out-String -Width 160 | Write-Host
+        }
     }
 }
