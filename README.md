@@ -8,6 +8,8 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+![IconDoctor 实际运行](docs/media/demo.png)
+
 ---
 
 ## 为什么要做这个
