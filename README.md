@@ -61,6 +61,8 @@ Import-Module .\IconDoctor.psd1
 .\bin\IconDoctor.ps1 -Scan
 ```
 
+**完全不想碰命令行**：双击仓库根目录的 `icondoctor.cmd` 就行——它会用一个临时绕过执行策略的 PowerShell 进程跑完整诊断，跑完停在结果页。Windows 默认禁止运行 `.ps1`，这个包装脚本就是为这一步准备的。
+
 ## 用法
 
 ### 1. 体检（只读，不碰系统）
