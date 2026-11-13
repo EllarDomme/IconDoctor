@@ -1,0 +1,27 @@
+name: 功能建议 / Feature request
+description: 新的诊断层、修复策略、或者输出/集成方式
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 你遇到的场景
+      description: 尽量描述成"什么故障 + 现有工具为什么解决不了"
+      placeholder: 我的图标在远程桌面下会白，但本地正常……
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 期望的方案
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 考虑过的替代方案
+    validations:
+      required: false

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 使用说明与六层原理 / Docs
+    url: https://github.com/EllarDomme/IconDoctor/blob/main/docs/diagnosis-layers.md
+    about: 先看看六层探针分别检测什么，再决定要不要提 Issue
+  - name: 真实案例 / Case study
+    url: https://github.com/EllarDomme/IconDoctor/blob/main/docs/case-study.md
+    about: 一次"清缓存全部无效"的完整排查过程，可作为填写模板

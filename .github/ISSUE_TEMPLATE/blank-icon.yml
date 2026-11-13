@@ -1,0 +1,89 @@
+name: 白纸图标报告 / Blank icon report
+description: 桌面快捷方式图标变成白纸（空白方块 / 通用文件图标），想让你帮忙定位是哪一层坏了
+title: "[Blank icon] "
+labels: ["bug", "diagnosis"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢报告！这个项目的全部价值都建立在真实案例上。
+
+        **请先跑一次诊断并把结果贴进来**，它决定了我能不能直接定位问题：
+
+        ```powershell
+        .\bin\IconDoctor.ps1 -Diagnose -Json > diagnosis.json
+        ```
+
+        然后把 `diagnosis.json` 的内容粘到下面「诊断输出」里（如果嫌长，至少贴 `Layers` 数组）。
+
+  - type: dropdown
+    id: windows
+    attributes:
+      label: Windows 版本
+      description: 运行 `winver` 可以看到构建号
+      options:
+        - Windows 11 24H2 (26100)
+        - Windows 11 23H2 (22631)
+        - Windows 11 22H2 (22621)
+        - Windows 10 22H2 (19045)
+        - 其他（请在补充说明里写构建号）
+    validations:
+      required: true
+
+  - type: input
+    id: affected
+    attributes:
+      label: 哪些程序受影响
+      description: 用逗号分隔，例如「剪映、Cemu、百度网盘」
+      placeholder: 剪映、Cemu、百度网盘
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scale
+    attributes:
+      label: 影响范围
+      options:
+        - 只有几个快捷方式白（其他正常）
+        - 桌面上所有快捷方式都白
+        - 桌面 + 开始菜单都白
+        - 白的是某个文件夹里的全部快捷方式
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: tried
+    attributes:
+      label: 已经试过哪些修复（勾上无效的那些）
+      options:
+        - label: 结束 explorer + 删除 iconcache_*.db + 重启 explorer
+        - label: 运行 ie4uinit.exe -show
+        - label: 重新注册 ShellExperienceHost
+        - label: 删除并重建快捷方式
+        - label: 给快捷方式指定外部 .ico 文件
+        - label: 把图标所在的文件夹换到别的路径
+        - label: 重启电脑
+
+  - type: textarea
+    id: diagnosis
+    attributes:
+      label: 诊断输出
+      description: '`.\bin\IconDoctor.ps1 -Diagnose -Json` 的输出'
+      render: json
+      placeholder: |
+        {
+          "Shortcuts": 41,
+          "BlankIcons": 0,
+          "Layers": [ ... ]
+        }
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: 补充说明
+      description: 截图、什么时候开始的、之前装过/卸载过什么、是否重定向过桌面路径
+      placeholder: 上周三开始，之前用某清理软件做过"深度清理"……
+    validations:
+      required: false

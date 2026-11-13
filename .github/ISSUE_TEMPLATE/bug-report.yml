@@ -1,0 +1,67 @@
+name: 工具本身的 Bug / Tool bug
+description: IconDoctor 报错、误判、或修复没有效果
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        如果问题是「图标是白的，工具也没修好」，请改用 **白纸图标报告** 模板。
+        这里只用于工具自身的缺陷（崩溃、报错、判定明显错误）。
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: 出问题的部分
+      options:
+        - Get-IconReport / -Scan（扫描判定）
+        - Invoke-IconDiagnosis / -Diagnose（六层诊断）
+        - Invoke-IconRepair / -Fix（修复）
+        - CLI 或 icondoctor.cmd（启动脚本）
+        - 模块导入 / 安装
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      description: 有报错堆栈的话请完整贴出来
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. Import-Module .\IconDoctor.psd1
+        2. Get-IconReport
+        3. 看到 ...
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: 环境
+      description: IconDoctor 版本 + PowerShell 版本 + Windows 构建号
+      placeholder: IconDoctor 0.1.0 / PowerShell 5.1 / Windows 11 26100
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: 补充信息
+      description: 相关截图、`Get-IconReport | ConvertTo-Json` 的输出片段等
+    validations:
+      required: false
