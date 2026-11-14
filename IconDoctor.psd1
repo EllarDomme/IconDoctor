@@ -1,6 +1,6 @@
 @{
     RootModule        = 'IconDoctor.psm1'
-    ModuleVersion     = '0.1.0'
+    ModuleVersion     = '0.2.0'
     GUID              = 'a3f1c9d2-5b64-4e0a-9c71-2f8d6b1e4a57'
     Author            = 'IconDoctor contributors'
     CompanyName       = 'Community'
@@ -24,6 +24,10 @@
         'Reset-IconCache'
         'Update-ShortcutIcon'
         'Reset-FolderObject'
+        'Reset-FolderIntegrity'
+        'ConvertFrom-IntegritySddl'
+        'Get-FolderIntegrityLabel'
+        'Test-LayerIntegrityLabel'
         'Clear-ShellIconNotification'
     )
     CmdletsToExport   = @()

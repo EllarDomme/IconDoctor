@@ -25,7 +25,7 @@
 
 这四步能解决**缓存层**的问题（大概七八成）。剩下那两三成呢？用户会被告知"你系统坏了""重装吧"。
 
-而这个故障其实有**至少六层**可能的原因，清缓存只覆盖其中一层：
+而这个故障其实有**至少七层**可能的原因，清缓存只覆盖其中一层：
 
 | 层 | 探测的问题 | 判断依据 |
 |---|---|---|
@@ -35,6 +35,7 @@
 | **L4 Shell 处理器** | `.lnk` 的 IconHandler 还注册着吗？ | `HKCR\lnkfile\shellex\IconHandler` → `windows.storage.dll` |
 | **L5 文件夹对象** | **是这个目录在污染图标解析吗？** | 同目录新建探针 `.lnk`，与 `%TEMP%` 对照 |
 | **L6 文件夹 ACL** | 目录权限有脏东西吗？ | Deny 规则、孤儿 SID（`S-1-4-*`） |
+| **L7 完整性标签** | **目录被降成"低完整性"了吗？** | 读 SACL 里的 Mandatory Label（Low/Medium/High） |
 
 **L5 是绝大多数工具完全没覆盖的一层**，也是真实存在、且清缓存永远修不好的情况。IconDoctor 的起点就是一次这样的真实故障，见 [docs/case-study.md](docs/case-study.md)。
 
@@ -77,7 +78,7 @@ Get-IconReport | Format-Table Name, Verdict, Similarity
 
 输出里每个快捷方式一个 `Verdict`：`Ok` / `Blank` / `TargetMissing` / `NoIconSource` / `Skipped`。
 
-### 2. 六层诊断
+### 2. 七层诊断
 
 ```powershell
 Invoke-IconDiagnosis | Select-Object -ExpandProperty Layers |
@@ -158,7 +159,7 @@ CI 会在 Windows + PowerShell 5.1 / 7 两个组合上跑完整测试，并强�
 .\bin\IconDoctor.ps1 -Diagnose -Json > diagnosis.json
 ```
 
-把 `diagnosis.json` 附在 Issue 里，六层探针的证据能直接判断是哪种故障。
+把 `diagnosis.json` 附在 Issue 里，七层探针的证据能直接判断是哪种故障。
 
 ## License
 

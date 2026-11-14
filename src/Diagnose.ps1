@@ -11,6 +11,7 @@ $script:LayerNames = [ordered]@{
     L4 = 'Shell handler'
     L5 = 'Folder object'
     L6 = 'Folder ACL'
+    L7 = 'Integrity label'
 }
 
 function New-LayerResult {
@@ -252,8 +253,109 @@ function Test-LayerFolderAcl {
     return New-LayerResult 'L6' 'Pass' 'Folder ACL looks normal.' $acl.Owner
 }
 
-function Invoke-IconDiagnosis {
+function ConvertFrom-IntegritySddl {
     <#
+    .SYNOPSIS
+        Parses a mandatory label ACE out of an SDDL fragment.
+    .DESCRIPTION
+        Accepts either a full SDDL string or just the SACL part, e.g.
+        '(ML;OICI;NW;;;LW)'. Returns $null when no label ACE is present.
+        Kept as a pure function so it can be unit tested without touching ACLs.
+    #>
+    param([Parameter(Mandatory)][string]$Sddl)
+
+    $names = @{ 'LW' = 'Low'; 'ME' = 'Medium'; 'HI' = 'High'; 'SI' = 'System'; 'UN' = 'Untrusted' }
+    $m = [regex]::Match($Sddl, '\(ML;(?<flags>[^;]*);(?<rights>[^;]*);[^;]*;[^;]*;(?<level>[A-Z]{2})\)')
+    if (-not $m.Success) { return $null }
+
+    $code = $m.Groups['level'].Value
+    $level = $code
+    if ($names.ContainsKey($code)) { $level = $names[$code] }
+
+    [pscustomobject]@{
+        Level     = $level
+        Code      = $code
+        NoWriteUp = ($m.Groups['rights'].Value -match 'NW')
+        Raw       = $m.Value
+    }
+}
+
+function Get-FolderIntegrityLabel {
+    <#
+    .SYNOPSIS
+        Reads the mandatory integrity label (SACL) of a folder.
+    .DESCRIPTION
+        Returns $null when the folder carries no explicit label (the normal
+        case - it then inherits Medium). Otherwise returns Level
+        (Low/Medium/High/System/Untrusted), NoWriteUp and the raw ACE.
+    .NOTES
+        Primary path is GetNamedSecurityInfo with LABEL_SECURITY_INFORMATION;
+        if that fails (privilege), falls back to parsing icacls output.
+    #>
+    param([Parameter(Mandatory)][string]$Path)
+
+    $sddl = $null
+    try { $sddl = [IconDoctor.Native]::GetLabelSddl($Path) } catch { $sddl = $null }
+
+    if ($sddl) {
+        $parsed = ConvertFrom-IntegritySddl -Sddl $sddl
+        if ($parsed) {
+            return [pscustomobject]@{
+                Level     = $parsed.Level
+                NoWriteUp = $parsed.NoWriteUp
+                Raw       = $parsed.Raw
+                Source    = 'Win32'
+            }
+        }
+    }
+
+    $text = & icacls $Path 2>$null | Out-String
+    $m2 = [regex]::Match($text, 'Mandatory Label\\(?<lvl>\w+) Mandatory Level')
+    if ($m2.Success) {
+        return [pscustomobject]@{
+            Level     = $m2.Groups['lvl'].Value
+            NoWriteUp = ($text -match '\(NW\)')
+            Raw       = $m2.Value
+            Source    = 'icacls'
+        }
+    }
+
+    return $null
+}
+
+function Test-LayerIntegrityLabel {
+    <#
+    .SYNOPSIS
+        Layer 7: is the folder tagged with a restrictive integrity label?
+    .DESCRIPTION
+        A Low (or Untrusted) mandatory label makes the shell's sandboxed icon
+        handler unable to read the folder: every shortcut inside renders
+        generic, cache resets do not help, and renaming or moving the folder
+        fails with access denied - while .exe icons keep working.
+    #>
+    param([Parameter(Mandatory)][string]$Folder)
+
+    if (-not (Test-Path -LiteralPath $Folder)) {
+        return New-LayerResult 'L7' 'Skip' "Folder not found: $Folder" $null
+    }
+
+    $label = Get-FolderIntegrityLabel -Path $Folder
+    if (-not $label) {
+        return New-LayerResult 'L7' 'Pass' 'No explicit integrity label (inherits Medium).' $null
+    }
+
+    if ($label.Level -in @('Low', 'Untrusted')) {
+        return New-LayerResult 'L7' 'Fail' `
+            "Folder carries a '$($label.Level)' integrity label: shell icon handlers cannot read it, so every shortcut inside renders blank. Renaming the folder is also denied." `
+            $label
+    }
+
+    $detail = "Integrity label: $($label.Level)"
+    if ($label.NoWriteUp) { $detail += ' (no-write-up)' }
+    return New-LayerResult 'L7' 'Pass' $detail $label
+}
+
+function Invoke-IconDiagnosis {    <#
     .SYNOPSIS
         Runs all six probes and returns a layered report.
     .DESCRIPTION
@@ -297,6 +399,7 @@ function Invoke-IconDiagnosis {
 
     foreach ($folder in @([Environment]::GetFolderPath('Desktop'))) {
         $layers += Test-LayerFolderAcl -Folder $folder
+        $layers += Test-LayerIntegrityLabel -Folder $folder
     }
 
     $blank = @($report | Where-Object { $_.Verdict -eq 'Blank' })

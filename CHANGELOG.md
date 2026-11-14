@@ -4,10 +4,21 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.2.0] - 2026-11-14
 
 ### Added
-- English README and English case study, with a language switcher on both.
+- **Layer 7: mandatory integrity label.** A folder tagged Low (or Untrusted) makes
+  the shell's sandboxed icon handler unable to read it: every shortcut inside renders
+  blank, cache resets do not help, and renaming the folder is denied. Found in the
+  field after layers 1-6 all reported Pass.
+- `Get-FolderIntegrityLabel`, `Test-LayerIntegrityLabel` and `ConvertFrom-IntegritySddl`
+  for reading the label from the SACL (Win32 first, `icacls` fallback).
+- `Reset-FolderIntegrity` repair step, wired into `Invoke-IconRepair`.
+- Case study section documenting the integrity-label failure, with a three-way
+  comparison of all causes found so far.
+
+### Changed
+- Layer-6 documentation extended; README now describes seven layers.
 
 ## [0.1.0] - 2026-11-13
 

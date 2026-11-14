@@ -24,7 +24,7 @@ Blank desktop icons are one of Windows' classic "unsolvable" problems. Every gui
 
 That fixes the **cache layer** — maybe 70–80% of cases. The rest of the time you are told to reinstall Windows.
 
-But "blank icon" has **at least six** possible causes, and cache clearing only covers one of them:
+But "blank icon" has **at least seven** possible causes, and cache clearing only covers one of them:
 
 | Layer | Question | How IconDoctor decides |
 |---|---|---|
@@ -34,6 +34,7 @@ But "blank icon" has **at least six** possible causes, and cache clearing only c
 | **L4 · Shell handler** | Is the `.lnk` IconHandler still registered? | `HKCR\lnkfile\shellex\IconHandler` → `windows.storage.dll` |
 | **L5 · Folder object** | **Is this folder poisoning icon resolution?** | Probe shortcut inside the folder, cross-checked in `%TEMP%` |
 | **L6 · Folder ACL** | Any unusual permission entries? | Deny rules, orphan SIDs (`S-1-4-*`) |
+| **L7 · Integrity label** | **Has the folder been dropped to a low integrity level?** | Mandatory label in the SACL (Low/Medium/High) |
 
 **L5 is the layer almost no tool covers** — and it is a real failure mode that cache clearing can never fix. IconDoctor started as one of those cases; see [docs/case-study.en.md](docs/case-study.en.md).
 
@@ -137,7 +138,7 @@ Issues are welcome — especially **your blank icon case**. The most useful atta
 .\bin\IconDoctor.ps1 -Diagnose -Json > diagnosis.json
 ```
 
-The six probe results in that file usually identify the failure mode immediately.
+The seven probe results in that file usually identify the failure mode immediately.
 
 ## License
 

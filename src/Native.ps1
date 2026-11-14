@@ -41,6 +41,44 @@ if (-not ('IconDoctor.Native' -as [type])) {
         [DllImport("shell32.dll")]
         public static extern void SHChangeNotify(int wEventId, uint uFlags,
             IntPtr dwItem1, IntPtr dwItem2);
+
+        // --- Mandatory integrity label (SACL) -------------------------------
+        // Windows 11 runs shell extensions such as the .lnk icon handler in a
+        // restricted context. If a folder carries a Low integrity label, that
+        // handler cannot read it and every shortcut inside renders generic -
+        // while the .exe icons still work, because those are read directly.
+
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern uint GetNamedSecurityInfo(
+            string pObjectName, int objectType, uint securityInfo,
+            out IntPtr ppsidOwner, out IntPtr ppsidGroup,
+            out IntPtr ppDacl, out IntPtr ppSacl, out IntPtr ppSecurityDescriptor);
+
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern bool ConvertSecurityDescriptorToStringSecurityDescriptor(
+            IntPtr pSecurityDescriptor, uint revision, uint securityInfo,
+            out IntPtr stringSecurityDescriptor, out uint stringSecurityDescriptorLen);
+
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr LocalFree(IntPtr hMem);
+
+        // Returns the SACL part of the SDDL (e.g. "S:(ML;;NW;;;LW)") or null.
+        public static string GetLabelSddl(string path)
+        {
+            IntPtr owner, group, dacl, sacl, sd;
+            uint err = GetNamedSecurityInfo(path, 1 /*SE_FILE_OBJECT*/,
+                0x10 /*LABEL_SECURITY_INFORMATION*/,
+                out owner, out group, out dacl, out sacl, out sd);
+            if (err != 0 || sd == IntPtr.Zero) return null;
+            try
+            {
+                IntPtr text; uint len;
+                if (!ConvertSecurityDescriptorToStringSecurityDescriptor(sd, 1, 0x10, out text, out len)) return null;
+                try { return Marshal.PtrToStringUni(text); }
+                finally { LocalFree(text); }
+            }
+            finally { LocalFree(sd); }
+        }
 '@
 }
 

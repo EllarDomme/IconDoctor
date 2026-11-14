@@ -122,3 +122,40 @@ WhiteRatio >= 0.45  AND  Saturation <= 0.18
 
 可以看到：**白色占比两者几乎一样**（0.67 vs 0.75），真正把它们区分开的是
 相似度和饱和度。这也是为什么单看"白不白"的检测一定会误报。
+
+### L7 · 完整性标签（Integrity label）
+
+**问**：这个目录被降级成"低完整性"了吗？
+
+**探针**：读目录安全描述符里的 SACL，取 Mandatory Label 的级别：
+
+```powershell
+icacls "E:\DeskTop"     # 会显示 Mandatory Label\Low Mandatory Level:(OI)(CI)(NW)
+```
+
+或者用 `GetNamedSecurityInfo` + `LABEL_SECURITY_INFORMATION`，拿到 SDDL 里的
+`(ML;...;;;LW)` 段，解析级别（`LW`=Low、`ME`=Medium、`HI`=High、`SI`=System）。
+
+**判定**：
+- 无标签 ⇒ Pass（继承 Medium，正常）
+- Medium / High ⇒ Pass
+- **Low / Untrusted ⇒ Fail**
+
+**为什么这一层会导致白纸图标**：Windows 11 把 shell 扩展（包括 `.lnk` 的
+IconHandler）放在受限上下文里跑。目录一旦被打成 Low，这个受限进程读不到目录
+元数据，于是**目录里所有快捷方式都退化成通用白图标**——而 `.exe` 的图标仍然
+正常，因为那是直接读 PE 资源，不走 IconHandler。
+
+同时它还会导致三个"很迷惑"的连带现象：
+
+1. 清图标缓存**无效**（缓存重建时照样读不到）
+2. 重建快捷方式**无效**（文件是好的）
+3. 目录**无法改名或移动**（Access denied），所以"换壳重建"这条路也走不通
+
+修复只有一条命令（把级别改回 Medium）：
+
+```powershell
+icacls "E:\DeskTop" /setintegritylevel (OI)(CI)M
+```
+
+> 这一层是 2026-11-14 那次故障的根因。前六层全部 Pass，只有它命中。

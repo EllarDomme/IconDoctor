@@ -219,6 +219,53 @@ function Reset-FolderObject {
     }
 }
 
+function Reset-FolderIntegrity {
+    <#
+    .SYNOPSIS
+        Brings a folder's mandatory integrity label back to Medium.
+    .DESCRIPTION
+        A Low integrity label makes the shell's sandboxed icon handler unable
+        to read the folder, so every shortcut inside renders blank and the
+        folder can no longer be renamed. Resetting the label to Medium restores
+        both, without touching any file.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [switch]$WhatIf
+    )
+
+    $before = Get-FolderIntegrityLabel -Path $Path
+    if (-not $before) {
+        return [pscustomobject]@{
+            Action = 'ResetFolderIntegrity'; Path = $Path; Changed = $false
+            Message = 'No explicit integrity label; nothing to reset.'
+        }
+    }
+    if ($before.Level -notin @('Low', 'Untrusted')) {
+        return [pscustomobject]@{
+            Action = 'ResetFolderIntegrity'; Path = $Path; Changed = $false
+            Message = "Integrity label is already $($before.Level); nothing to reset."
+        }
+    }
+
+    if ($WhatIf) {
+        return [pscustomobject]@{
+            Action = 'ResetFolderIntegrity'; Path = $Path; Changed = $false
+            Message = "Would reset integrity label from $($before.Level) to Medium."
+        }
+    }
+
+    & icacls $Path /setintegritylevel '(OI)(CI)M' 2>&1 | Out-Null
+    $after = Get-FolderIntegrityLabel -Path $Path
+
+    [pscustomobject]@{
+        Action  = 'ResetFolderIntegrity'
+        Path    = $Path
+        Changed = $true
+        Message = "Integrity label: $($before.Level) -> $(if ($after) { $after.Level } else { 'inherited' })."
+    }
+}
+
 function Invoke-IconRepair {
     <#
     .SYNOPSIS
@@ -265,6 +312,15 @@ function Invoke-IconRepair {
         if ($item.Verdict -eq 'TargetMissing') { continue }
         $steps.Add((Update-ShortcutIcon -Path $item.Path -WhatIf:$WhatIf))
         Start-Sleep -Milliseconds 300
+    }
+
+    # Layer 7 first-aid: a restrictive integrity label breaks every shortcut in
+    # the folder, and rebuilding the shortcuts alone will not help.
+    foreach ($folder in @($broken | ForEach-Object { Split-Path -Parent $_.Path } | Sort-Object -Unique)) {
+        $label = Get-FolderIntegrityLabel -Path $folder
+        if ($label -and $label.Level -in @('Low', 'Untrusted')) {
+            $steps.Add((Reset-FolderIntegrity -Path $folder -WhatIf:$WhatIf))
+        }
     }
 
     if (-not $WhatIf) {

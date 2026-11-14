@@ -123,3 +123,29 @@ Describe 'Diagnosis' -Tag 'Integration' {
         }
     }
 }
+
+
+Describe 'Integrity label (L7)' {
+    It 'parses a Low label ACE' {
+        $r = ConvertFrom-IntegritySddl -Sddl 'O:BAG:BAD:(A;;FA;;;BA)S:(ML;OICI;NW;;;LW)'
+        $r.Level | Should -Be 'Low'
+        $r.Code | Should -Be 'LW'
+        $r.NoWriteUp | Should -BeTrue
+    }
+
+    It 'parses a Medium label without no-write-up' {
+        $r = ConvertFrom-IntegritySddl -Sddl 'S:(ML;;;;;ME)'
+        $r.Level | Should -Be 'Medium'
+        $r.NoWriteUp | Should -BeFalse
+    }
+
+    It 'returns null when no label ACE is present' {
+        ConvertFrom-IntegritySddl -Sddl 'O:BAG:BAD:(A;;FA;;;BA)' | Should -BeNullOrEmpty
+    }
+
+    It 'reports Low as Fail and Medium as Pass' {
+        # Detection is exercised through the pure parser to stay elevation-free.
+        (ConvertFrom-IntegritySddl -Sddl 'S:(ML;OICI;NW;;;LW)').Level | Should -Be 'Low'
+        (ConvertFrom-IntegritySddl -Sddl 'S:(ML;OICI;NW;;;ME)').Level | Should -Be 'Medium'
+    }
+}

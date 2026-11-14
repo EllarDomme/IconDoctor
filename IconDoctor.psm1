@@ -34,5 +34,9 @@ Export-ModuleMember -Function @(
     'Reset-IconCache'
     'Update-ShortcutIcon'
     'Reset-FolderObject'
+    'Reset-FolderIntegrity'
+    'ConvertFrom-IntegritySddl'
+    'Get-FolderIntegrityLabel'
+    'Test-LayerIntegrityLabel'
     'Clear-ShellIconNotification'
 )
